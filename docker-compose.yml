@@ -1,0 +1,52 @@
+version: '2'
+services:
+  apache:
+    #image: usdadaito/gov-drupal:php73 -- apache doesn't start
+    #image: usdaoc/gov-drupal:latest
+    #image: drupal:latest 
+    image: drupal:8.9.5 #-- it works!!!
+    environment:
+    #  DOCROOT: /var/application/docroot/
+    #  DOCROOT: ./docroot/
+      DOCROOT: ./
+    stdin_open: true
+    links:
+    - MariaDB:db
+ #   volumes:
+ #   - ../ams/public-content/:/mnt/public-content/
+ #   - ../ams/tmp/:/mnt/tmp/
+ #   - ../ams/settings-php/:/mnt/settings-php/
+ #   - ../ams/sync/:/mnt/sync/
+ #   - ../ams/private-content/:/mnt/private-content/
+ #   - .:/var/application
+    tty: true
+  Varnish:
+    image: usdaoc/varnish-cache:eea-varnish
+    stdin_open: true
+    tty: true
+    links:
+    - apache
+    ports:
+    - 8020:6081
+    environment:
+      BACKENDS: apache
+      CACHE_SIZE: 2048M
+      BACKENDS_PROBE_INTERVAL: 3s
+      BACKENDS_PROBE_THRESHOLD: '2'
+      BACKENDS_PROBE_TIMEOUT: 1s
+      BACKENDS_PROBE_WINDOW: '3'
+      BACKENDS_PROBE_URL: '/robots.txt'
+      DNS_ENABLED: 'true'
+      DNS_TTL: '1'
+  MariaDB:
+    #image: mariadb:10.2 #-- drupal:latest requires at least 10.3.7
+    image: mariadb:latest
+    environment:
+      MYSQL_DATABASE: drupal895
+      MYSQL_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: sysop_user
+    stdin_open: true
+#    volumes:
+#    - ../ams/mysql:/var/lib/mysql
+    tty: true
